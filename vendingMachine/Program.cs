@@ -1,13 +1,15 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
+using System.IO;
 
 namespace vendingMachine
 {
     internal class Program
     {
+        public const string FILENAME = "ProductFile.txt";
         public struct Product
         {
             public string name;
@@ -17,27 +19,153 @@ namespace vendingMachine
 
         static void Main(string[] args)
         {
-            Product[] machine = new Product[10];
+            
+            List<Product> machine = new List<Product>();
             // load our product data hear.
-            LoadItems(machine);
+            LoadItemsFromFile(machine);
 
             while (true)
             {
                 //Display the welcome screen and getting input from user
                 int optionChose = WelcomeScreen(machine);
-
+                //99 is the option to exit the program
+                //this means right now our vending machine can hold 98 products
+                if (optionChose == 99)
+                {
+                    WriteProductsBack(machine);
+                    Environment.Exit(0);
+                }
                 EnterPayment(machine, optionChose);
             }
         }
-
-        /****************************************************
-         * This method takes the payment from the user 
-         * and gives them change
-         ****************************************************/
-        private static void EnterPayment(Product[] machine, int optionChose)
+        /**********************************************
+         *  method : WriteProductsBack
+         *  params : List of products
+         *  return : boolean  indicates success or faliure 
+         *  
+         *  Description 
+        *   This will write our products back to the file
+        * *******************************************/
+        private static bool WriteProductsBack(List<Product> machine)
         {
-            // This assume the caller is passing a valid index!
-            double price = machine[optionChose].price;
+            const string DELIMITER = ",";
+            StreamWriter filewriter = null;
+            bool rc = true;
+            try
+            {
+                filewriter = new StreamWriter(FILENAME);
+                foreach (Product product in machine)
+                {
+                    String productLine = product.name + DELIMITER + product.price + DELIMITER + product.productCount;
+                    filewriter.WriteLine(productLine);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Problem has accured when writing our products into the file");
+                Console.WriteLine("Technical Details : " + ex.Message);
+                rc = false;
+            }
+            if (filewriter != null) 
+            {
+                filewriter.Close(); 
+            }
+            return rc;
+        }
+
+        /**********************************************
+         *  method : LoadItemsFromFile
+         *  params : List of products
+         *  return : void
+         *  
+         *  Description 
+        *   This will load our products from a file
+        * *******************************************/
+
+        private static void LoadItemsFromFile(List<Product> machine)
+        {
+           
+            try
+            {
+                // Create an instance of StreamReader to read from a file.
+                // The using statement also closes the StreamReader.
+                using (StreamReader sr = new StreamReader(FILENAME))
+                {
+                    string line;
+                    // Read and display lines from the file until the end of
+                    // the file is reached.
+                    while ((line = sr.ReadLine()) != null)
+                    {
+                        if (line.Length > 0)
+                        {
+
+                            if (line.StartsWith("#"))
+                            {
+                                // this line is a comment. ignore it
+                                continue;
+                            }
+                            else
+                            {
+                                // we are assuming this is a product line
+                                string [] details = line.Split(',');
+                                if (details.Length != 3)
+                                {
+                                    Console.WriteLine("This entry in the Product File is not in the valid format : " + line);
+                                }
+                                else
+                                {
+                                    // looks good with our product details. lets construct it
+                                    Product product = new Product();
+                                    product.name = details[0];
+                                    try
+                                    {
+                                        product.price = double.Parse(details[1]);
+                                        product.productCount = int.Parse(details[2]);
+
+
+                                        machine.Add(product);
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        Console.WriteLine("This entry in the Product File is not in the valid format : " + line);
+                                        Console.WriteLine("Technical Details : " + ex.Message);
+                                    }
+                                }
+                            }
+                        } 
+
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                // Let the user know what went wrong.
+                Console.WriteLine("There is a problem opening the product file " + FILENAME);
+                Console.WriteLine("We cannot continue ");
+                Console.WriteLine("Technical Details : " + e.Message);
+                Environment.Exit(1);
+            }
+
+
+
+
+        }
+
+        /**********************************************
+         *  method : EnterPayment
+         *  params : List of products
+         *           the option the user chose
+         *  return : void
+         *  
+         *  Description 
+         *   This method takes the payment from the user 
+         * and gives them change
+        * *******************************************/
+        
+        private static void EnterPayment(List<Product> machine, int optionChose)
+        {
+            Product chosenProduct = machine[optionChose];
+            double price = chosenProduct.price;
 
             bool quit = false;
             double moneyentered = 0;
@@ -104,9 +232,10 @@ namespace vendingMachine
                 if (moneyentered >= price)
                 {
 
-                    Console.WriteLine("Here is your product " + machine[optionChose].name);
+                    Console.WriteLine("Here is your product " + chosenProduct.name);
                     //decrement our product count
-                    machine[optionChose].productCount--;
+                    chosenProduct.productCount--;
+                    machine[optionChose] = chosenProduct;
                     if (moneyentered > price)
                     {
                         moneyentered -= price;
@@ -120,8 +249,18 @@ namespace vendingMachine
                 else 
                 {
                     double amountOwe = price - moneyentered;
-                    amountOwe *= 100;
-                    Console.WriteLine("You still owe " + amountOwe + " pence");
+                    
+
+                    if (amountOwe < 1)
+                    {
+                        amountOwe *= 100;
+                        Console.WriteLine("You still owe " + amountOwe + " pence");
+                    }
+                    else
+                    {
+                        
+                        Console.WriteLine("You still owe £" + amountOwe );
+                    }
                 }
 
             } // end while
@@ -131,13 +270,16 @@ namespace vendingMachine
 
         }
 
+        /**********************************************
+      *  method : WelcomeScreen
+      *  params : List of products
+      *  return : The index of the product chosen or 99 to exit
+      *  Description 
+      *   Welcome screen displays the list of products 
+      *   asks the user which product they want
+     * *******************************************/
 
-
-        /****************************************************
-         * 
-         * 
-         ****************************************************/
-        public static int WelcomeScreen(Product[]machine)
+        public static int WelcomeScreen(List<Product>machine)
         {
             int userPurchase = 0;
             bool valid = false;
@@ -146,7 +288,7 @@ namespace vendingMachine
 
 
                 int count = 0;
-                Console.Clear();
+                //Console.Clear();
                 Console.WriteLine("Here is are our list of products available ");
                 Console.WriteLine("==========================================");
                 foreach (Product item in machine)
@@ -170,7 +312,7 @@ namespace vendingMachine
                 {
                     userPurchase = int.Parse(Console.ReadLine());
 
-                    if (userPurchase >= 0 && userPurchase < machine.Length)
+                    if (userPurchase >= 0 && userPurchase < machine.Count)
                     {
                         if (machine[userPurchase].productCount == 0)
                         {
@@ -183,7 +325,7 @@ namespace vendingMachine
                     else if (userPurchase == 99)
                     {
                         Console.WriteLine("You have chosen to exit ,thank you.");
-                        Environment.Exit(0);
+                        valid = true;
                     }
                     else
                     {
@@ -200,11 +342,17 @@ namespace vendingMachine
             }
             return userPurchase;
         }
+
+    
+
+
         /****************************************************
          * This Loads the reference data of all the 
-         * product that are stored
+         * product that are stored 
          * NOTE: at the moment the product data is hard coded
          * but we can chage is to load the data from a properties file 
+         * 
+         * NOTE : deprecated. Currently unused
          ****************************************************/
         public static void LoadItems(Product[] machine)
         {
