@@ -1,15 +1,19 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
-using System.IO;
+using static vendingMachine.Program;
 
 namespace vendingMachine
 {
     internal class Program
     {
         public const string FILENAME = "ProductFile.txt";
+        public const int QUIT_FUNCTION = 99;
+        public const int ADMIN_FUNCTION = 999999;
+
         public struct Product
         {
             public string name;
@@ -30,20 +34,45 @@ namespace vendingMachine
                 int optionChose = WelcomeScreen(machine);
                 //99 is the option to exit the program
                 //this means right now our vending machine can hold 98 products
-                if (optionChose == 99)
+                if (optionChose == QUIT_FUNCTION)
                 {
                     WriteProductsBack(machine);
                     Environment.Exit(0);
                 }
-                EnterPayment(machine, optionChose);
+                else if (optionChose == ADMIN_FUNCTION)
+                {
+                    AdminFeatures(machine);
+                }
+                else
+                {
+                    EnterPayment(machine, optionChose);
+                }
             }
         }
-        /**********************************************
-         *  method : WriteProductsBack
+
+        /********************************************
+         *  method : AdminFeatures
          *  params : List of products
-         *  return : boolean  indicates success or faliure 
-         *  
-         *  Description 
+         *  return : 
+         *
+         * Description 
+         *   This method will need to be able to add and remove stock to our stock list.
+         ********************************************/
+        private static void AdminFeatures(List<Product> machine)
+        {
+            Console.WriteLine("===========================");
+            Console.WriteLine("    UNDER CONSTRUCTION     ");
+            Console.WriteLine("===========================");
+            Thread.Sleep(3000);
+            return;
+        }
+
+        /**********************************************
+        *  method : WriteProductsBack
+        *  params : List of products
+        *  return : boolean  indicates success or faliure 
+        *  
+        *  Description 
         *   This will write our products back to the file
         * *******************************************/
         private static bool WriteProductsBack(List<Product> machine)
@@ -304,13 +333,26 @@ namespace vendingMachine
                     count++;
                         
                 }
-                Console.WriteLine("Enter 99 to exit ");
+                Console.WriteLine("Enter ADMIN to enter the stock administrator function");
+                Console.WriteLine("Enter " + QUIT_FUNCTION +" to exit ");
+                
 
-                Console.WriteLine("Please enter the number of the product you wish to buy.");
+                Console.WriteLine("\nPlease enter the number of the product you wish to buy.");
+
+                String userInput = Console.ReadLine();
+
+                if (userInput == null && userInput.Length == 0)
+                {
+                    continue;
+                }
+                if ("ADMIN".Equals (userInput.ToUpper()))
+                {
+                    return ADMIN_FUNCTION;
+                }
                 
                 try
                 {
-                    userPurchase = int.Parse(Console.ReadLine());
+                    userPurchase = int.Parse(userInput);
 
                     if (userPurchase >= 0 && userPurchase < machine.Count)
                     {
@@ -322,7 +364,7 @@ namespace vendingMachine
                         }
                         valid = true;
                     }
-                    else if (userPurchase == 99)
+                    else if (userPurchase == QUIT_FUNCTION)
                     {
                         Console.WriteLine("You have chosen to exit ,thank you.");
                         valid = true;
