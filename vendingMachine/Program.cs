@@ -25,6 +25,21 @@ namespace vendingMachine
         {
             
             List<Product> machine = new List<Product>();
+
+            // ONLY FOR DOTNETFIDDLE TESTING!
+            String environment = "NOTDotNetFiddle";
+           
+            // Could not work out any way to load the properties file into the dotnetfiddle sandbox, other than create it.
+            if ("DotNetFiddle".Equals(environment))
+            {
+                Console.WriteLine("We are running in DotNetFiddle!");
+                SetupOurPropertiesFile();
+            }
+            else
+            {
+                Console.WriteLine("We are running in a local or unknown environment.");
+            }
+           
             // load our product data hear.
             LoadItemsFromFile(machine);
 
@@ -48,6 +63,47 @@ namespace vendingMachine
                     EnterPayment(machine, optionChose);
                 }
             }
+        }
+
+        /********************************************
+         *  method : SetupOurPropertiesFile
+         *  params : None
+         *  return : 
+         *
+         * Description 
+         *   Special method for running in dotnetfiddle.
+         ********************************************/
+        private static void SetupOurPropertiesFile()
+        {
+            StreamWriter filewriter = null;
+            bool rc = true;
+            try
+            {
+                filewriter = new StreamWriter(FILENAME);
+                { 
+                    filewriter.WriteLine("Twix,1.5,10");
+                    filewriter.WriteLine("Mars bar,1.5,0");
+                    filewriter.WriteLine("Wispa,1,10");
+                    filewriter.WriteLine("Crisps,0.8,9");
+                    filewriter.WriteLine("Energy drink,2.2,10");
+                    filewriter.WriteLine("Water,1,10");
+                    filewriter.WriteLine("Coke zero,1.5,10");
+                    filewriter.WriteLine("Protein bar,2.2,10");
+                    filewriter.WriteLine("Milky way,1.2,10");
+                    filewriter.WriteLine("Malteser,1.4,10");
+                }
+                filewriter.Close();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Problem has accured when writing our products into the file");
+                Console.WriteLine("Technical Details : " + ex.Message);
+                throw ex;
+            }
+           
+
+
+
         }
 
         /********************************************
@@ -268,7 +324,7 @@ namespace vendingMachine
                     if (moneyentered > price)
                     {
                         moneyentered -= price;
-                        Console.WriteLine("here is your change" + moneyentered);
+                        Console.WriteLine("here is your change " + moneyentered);
 
                     }
                     Thread.Sleep(3000);
