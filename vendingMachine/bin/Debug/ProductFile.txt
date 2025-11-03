@@ -1,6 +1,6 @@
 Twix,1.5,10
 Mars bar,1.5,0
-Wispa,1,10
+Wispa,1,9
 Crisps,0.8,9
 Energy drink,2.2,10
 Water,1,10

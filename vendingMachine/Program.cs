@@ -397,7 +397,7 @@ namespace vendingMachine
 
                 String userInput = Console.ReadLine();
 
-                if (userInput == null && userInput.Length == 0)
+                if (userInput == null || userInput.Length == 0)
                 {
                     continue;
                 }
